@@ -64,4 +64,16 @@ void main() {
     // asset
     expect(future, throwsA(DomainError.unexpected));
   });
+
+  test('Should throw ServerError if HttpClient returns 500', () async {
+    when(httpClient.request(
+      url: anyNamed('url'),
+      method: anyNamed('method'),
+      body: anyNamed('body'),
+    )).thenThrow(HttpError.serverError);
+    // act    
+    final future = sut.auth(params);
+    // asset
+    expect(future, throwsA(DomainError.unexpected));
+  });
 }
