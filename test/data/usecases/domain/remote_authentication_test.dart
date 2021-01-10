@@ -26,6 +26,12 @@ void main() {
     );
   });
   test('Should call HttpClient with correct values', () async {
+    when(httpClient.request(
+      url: anyNamed('url'),
+      method: anyNamed('method'),
+      body: anyNamed('body'),
+    )).thenAnswer((_) async =>
+        {'accessToken': faker.guid.guid(), 'name': faker.person.name()});
     // act
     await sut.auth(params);
     // asset
@@ -47,7 +53,7 @@ void main() {
       method: anyNamed('method'),
       body: anyNamed('body'),
     )).thenThrow(HttpError.badRequest);
-    // act    
+    // act
     final future = sut.auth(params);
     // asset
     expect(future, throwsA(DomainError.unexpected));
@@ -59,7 +65,7 @@ void main() {
       method: anyNamed('method'),
       body: anyNamed('body'),
     )).thenThrow(HttpError.notFound);
-    // act    
+    // act
     final future = sut.auth(params);
     // asset
     expect(future, throwsA(DomainError.unexpected));
@@ -71,21 +77,36 @@ void main() {
       method: anyNamed('method'),
       body: anyNamed('body'),
     )).thenThrow(HttpError.serverError);
-    // act    
+    // act
     final future = sut.auth(params);
     // asset
     expect(future, throwsA(DomainError.unexpected));
   });
 
-  test('Should throw InvalidCredentialsError if HttpClient returns 401', () async {
+  test('Should throw InvalidCredentialsError if HttpClient returns 401',
+      () async {
     when(httpClient.request(
       url: anyNamed('url'),
       method: anyNamed('method'),
       body: anyNamed('body'),
     )).thenThrow(HttpError.unauthorized);
-    // act    
+    // act
     final future = sut.auth(params);
     // asset
     expect(future, throwsA(DomainError.invalidCredentials));
+  });
+
+  test('Should return an Account if HttpClient returns 200', () async {
+    final accessToken = faker.guid.guid();
+    when(httpClient.request(
+      url: anyNamed('url'),
+      method: anyNamed('method'),
+      body: anyNamed('body'),
+    )).thenAnswer((_) async =>
+        {'accessToken': accessToken, 'name': faker.person.name()});
+    // act
+    final account = await sut.auth(params);
+    // asset
+    expect(account.token, accessToken);
   });
 }
